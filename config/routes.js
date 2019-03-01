@@ -1,4 +1,6 @@
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
+const db = require('../database/dbConfig');
 
 const { authenticate } = require('../auth/authenticate');
 const tokenService = require('../auth/generate-token');
@@ -12,6 +14,9 @@ module.exports = server => {
 function register(req, res) {
   // implement user registration
   let user = req.body;
+
+  const hash = bcrypt.hashSync(user.password, 10);
+  user.password = hash;
 
   db('users')
     .insert(user)
@@ -39,7 +44,7 @@ function login(req, res) {
     .then(user =>{
       if (user && bcrypt.compareSync(password, user.password)) {
         const token = tokenService.generateToken(user);
-        res.status(200).json({ message: `Welcome, ${user.username}, token` });
+        res.status(200).json({ message: `Welcome, ${user.username}`, token });
       } else {
         res.status(401).json({ error: 'Invalid credentials, please try again.'});
       }
